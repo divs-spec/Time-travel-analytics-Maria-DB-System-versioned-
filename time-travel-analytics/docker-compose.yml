@@ -1,1 +1,40 @@
 
+---
+
+--- `docker-compose.yml` ---
+```yaml
+version: '3.8'
+services:
+  mariadb:
+    image: mariadb:10.11
+    environment:
+      MYSQL_ROOT_PASSWORD: example
+      MYSQL_DATABASE: time_travel
+    ports:
+      - 3306:3306
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./db:/docker-entrypoint-initdb.d:ro
+
+  backend:
+    build: ./backend
+    image: timetravel-backend:local
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mariadb://mariadb:3306/time_travel
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: example
+    depends_on:
+      - mariadb
+    ports:
+      - 8080:8080
+
+  frontend:
+    build: ./frontend
+    image: timetravel-frontend:local
+    depends_on:
+      - backend
+    ports:
+      - 3000:3000
+
+volumes:
+  db_data:
