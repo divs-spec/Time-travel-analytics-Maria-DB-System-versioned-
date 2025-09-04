@@ -1,1 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    services:
+      mariadb:
+        image: mariadb:10.11
+        env:
+          MYSQL_ROOT_PASSWORD: example
+          MYSQL_DATABASE: time_travel
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -pexample"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: Build backend
+      working-directory: ./backend
+      run: mvn -B -ntp package
+
+    - name: Run backend tests
+      working-directory: ./backend
+      run: mvn test
+
+    - name: Build frontend
+      working-directory: ./frontend
+      run: |
+        npm ci
+        npm run build
 
